@@ -1,0 +1,251 @@
+<% layout ("/layouts/boilerplate") %>
+
+    <style>
+        #filters {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter {
+            text-align: center;
+            margin-right: 2rem;
+            margin-top: 2rem;
+            opacity: 0.7;
+        }
+
+        .filter:hover {
+            opacity: 1;
+            cursor: pointer;
+        }
+
+        .filter p {
+            font-size: 0.8rem;
+        }
+
+        .tax-info {
+            display: none;
+        }
+
+        .tax-toggle {
+            border: 1px solid black;
+            border-radius: 1rem;
+            height: 3.2rem;
+            padding: 1rem;
+            margin-left: 6rem;
+            display: flex;
+            align-items: center;
+        }
+        .result-item {
+    position: relative;
+    width: 300px;  /* Adjust width as needed */
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 2px;
+    margin-right: 25px;
+}
+
+.result-item img {
+    width: 90%;
+    height: 200px; /* Fixed height for uniformity */
+    object-fit: cover; /* Ensures the image covers the area without distortion */
+    display: block;
+}
+
+#listings-content {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.6); /* Dark overlay for readability */
+    color: white;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+#listings-container {
+    display: flex;
+    flex-wrap: wrap; /* Prevents overlap */
+    gap: 20px;
+    justify-content: center;
+}
+
+    </style>
+
+
+    <div id="filters">
+        <div class="filter" data-category="Trending">
+            <div><i class="fa-solid fa-fire"></i></div>
+            <p>Trending</p>
+        </div>
+        <div class="filter" data-category="Rooms">
+            <div><i class="fa-solid fa-bed"></i></div>
+            <p>Rooms</p>
+        </div>
+        <div class="filter" data-category="Iconic cities">
+            <div><i class="fa-solid fa-mountain-city"></i></div>
+            <p>Iconic Cities</p>
+        </div>
+        <div class="filter" data-category="Mountains">
+            <div><i class="fa-solid fa-mountain"></i></div>
+            <p>Mountains</p>
+        </div>
+        <div class="filter" data-category="Castles">
+            <div><i class="fa-brands fa-fort-awesome"></i></div>
+            <p>Castles</p>
+        </div>
+        <div class="filter" data-category="Amazing pools">
+            <div><i class="fa-solid fa-person-swimming"></i></div>
+            <p>Amazing pools</p>
+        </div>
+        <div class="filter" data-category="Camping">
+            <div><i class="fa-solid fa-campground"></i></div>
+            <p>Camping</p>
+        </div>
+        <div class="filter" data-category="Farms">
+            <div><i class="fa-solid fa-tractor"></i></div>
+            <p>Farms</p>
+        </div>
+        <div class="filter" data-category="Arctic">
+            <div><i class="fa-solid fa-snowman"></i></div>
+            <p>Arctic</p>
+        </div>
+        <div class="filter" data-category="Domes">
+            <div><i class="fa-solid fa-igloo"></i></div>
+            <p>Domes</p>
+        </div>
+        <div class="filter" data-category="Boats">
+            <div><i class="fa-solid fa-ship"></i></div>
+            <p>Boats</p>
+        </div>
+        <div class="tax-toggle">
+            <div class="form-check-reverse form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault">
+                <label class="form-check-label" for="flexSwitchCheckDefault">Display total after taxes</label>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="listings" class="row row-cols-lg-3  row-cols-md-3  row-cols-sm-1 mt-3">
+
+        <% for(let listing of allListings){ %>
+            <a href="/listings/<%= listing._id %> " class="listing-link">
+                <div class="card col listing-card">
+                    <img src="<%=listing.image.url%>" class="card-img-top" alt="listing_image" style="height: 20rem;">
+                    <div class="card-img-overlay"></div>
+                    <div class="card-body">
+                        <p class="card-text">
+                            <b>
+                                <%=listing.title %>
+                            </b> <br>
+                            &#8377;<%= listing.price.toLocaleString("en-IN")%>/night
+                                <i class="tax-info"> &nbsp; &nbsp; +18%GST</i>
+                        </p>
+                    </div>
+                </div>
+            </a>
+            <% } %>
+    </div>
+
+    <script>
+        let taxSwitch = document.getElementById("flexSwitchCheckDefault");
+        taxSwitch.addEventListener("click", () => {
+            let taxInfo = document.getElementsByClassName("tax-info");
+            for (info of taxInfo) {
+                if (info.style.display != "inline") {
+                    info.style.display = "inline";
+                } else {
+                    info.style.display = "none";
+                }
+
+            }
+        });
+        document.querySelectorAll(".filter").forEach(filter => {
+            filter.addEventListener("click", () => {
+                const category = filter.getAttribute("data-category");
+                console.log("Selected category:", category);
+
+
+                if (category) {
+                    fetchListings(category);
+                } else {
+                    console.error("Category is missing!");
+                }
+            });
+        });
+
+        function fetchListings(category) {
+            fetch(`/listings?category=${encodeURIComponent(category)}`)
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, "text/html");
+                    const listingsDiv = document.getElementById("listings");
+
+                    if (listingsDiv) {
+                        listingsDiv.innerHTML = doc.getElementById("listings").innerHTML;
+                    } else {
+                        console.error("Element with ID 'listings' not found");
+                    }
+                })
+                .catch(error => console.error("Error fetching listings:", error));
+        }
+
+        //Search Bar
+        document.getElementById("search-form").addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const query = document.getElementById("search-input").value;
+            if (!query) {
+                console.error("Search input is empty!");
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/search?query=${encodeURIComponent(query)}`);
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
+                const data = await response.json();
+
+
+                // Update UI with results
+                console.log("Search results:", data.listings);
+                displayListings(data.listings);
+            } catch (error) {
+                console.error("Error fetching search results:", error);
+            }
+            function displayListings(listings) {
+                const listingsContainer = document.getElementById("listings"); // Make sure this ID exists in HTML
+                if (!listingsContainer) {
+                    console.error("Error: listingsContainer not found in the DOM!");
+                    return;
+                }
+
+                listingsContainer.innerHTML = "";    // Clear previous results
+
+                if (listings.length === 0) {
+                    listingsContainer.innerHTML = "<p>No listings found.</p>";
+                    return;
+                }
+
+                listings.forEach(listing => {
+                    const listingElement = document.createElement("div");
+                    listingElement.className = "result-item";
+                    listingElement.innerHTML = `
+            <img src="${listing.image.url}" alt="${listing.title}"  />
+            <h2>${listing.title}</h2>
+            <p>${listing.description}</p>
+            <p><strong>Location:</strong> ${listing.location}</p>
+            <p><strong>Price:</strong> ₹${listing.price}/night</p>
+        `;
+
+                    listingsContainer.appendChild(listingElement);
+                });
+            }
+        });
+
+
+
+    </script>
