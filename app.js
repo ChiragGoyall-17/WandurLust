@@ -75,6 +75,14 @@ const sessionOptions ={
 //     res.send("Hi, I am root");
 // });
 
+app.get("/", (req, res) => {
+    res.redirect("/listings");
+});
+
+app.get("/favicon.ico", (req, res) => {
+    res.status(204).end();
+});
+
 app.use(session(sessionOptions));
 app.use(flash());
 
