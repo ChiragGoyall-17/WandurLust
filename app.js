@@ -25,6 +25,13 @@ const { searchListings } = require('./controllers/listing.js');
 
 const dbUrl = process.env.ATLASDB_URL;
 const port = process.env.PORT || 8080;
+const requiredEnv = ["ATLASDB_URL", "SECRET"];
+const missingEnv = requiredEnv.filter((key) => !process.env[key]);
+
+if (missingEnv.length) {
+    console.error(`Missing required environment variables: ${missingEnv.join(", ")}`);
+    process.exit(1);
+}
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
@@ -34,20 +41,6 @@ app.engine('ejs', ejsMate);
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use(express.json());
-
-main()
-    .then(() => {
-        console.log("Connected to DB");
-    })
-    .catch((err) => {
-        console.log(err);
-    });
-
-async function main() {
-    await mongoose.connect(dbUrl);
-    useNewUrlParser: true;
-    useUnifiedTopology: true;
-};
 const store = MongoStore.create({
     mongoUrl: dbUrl,
     crypto: {
@@ -123,6 +116,26 @@ app.use((err, req, res, next) => {
     res.status(statusCode).render("error.ejs", { message });
 });
 
-app.listen(port, () => {
-    console.log(`Server is listening to port ${port}`);
+async function startServer() {
+    await mongoose.connect(dbUrl);
+    console.log("Connected to DB");
+
+    app.listen(port, () => {
+        console.log(`Server is listening to port ${port}`);
+    });
+}
+
+process.on("unhandledRejection", (err) => {
+    console.error("Unhandled promise rejection:", err);
+    process.exit(1);
+});
+
+process.on("uncaughtException", (err) => {
+    console.error("Uncaught exception:", err);
+    process.exit(1);
+});
+
+startServer().catch((err) => {
+    console.error("Failed to start server:", err);
+    process.exit(1);
 });
