@@ -24,6 +24,7 @@ const userRouter = require("./routes/user.js");
 const { searchListings } = require('./controllers/listing.js');
 
 const dbUrl = process.env.ATLASDB_URL;
+const port = process.env.PORT || 8080;
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
@@ -55,7 +56,7 @@ const store = MongoStore.create({
     touchAfter : 24*3600,
 });
 
-store.on("error", () =>{
+store.on("error", (err) =>{
     console.log("ERROR in MONGO SESSION STORE", err);
 });
 
@@ -83,6 +84,13 @@ app.get("/favicon.ico", (req, res) => {
     res.status(204).end();
 });
 
+app.use((req, res, next) => {
+    res.locals.success = [];
+    res.locals.error = [];
+    res.locals.currUser = null;
+    next();
+});
+
 app.use(session(sessionOptions));
 app.use(flash());
 
@@ -96,7 +104,7 @@ passport.deserializeUser(User.deserializeUser());
 app.use((req,res,next) =>{
     res.locals.success = req.flash("success");
     res.locals.error = req.flash("error");
-    res.locals.currUser = req.user;
+    res.locals.currUser = req.user || null;
     next();
 });
 
@@ -115,6 +123,6 @@ app.use((err, req, res, next) => {
     res.status(statusCode).render("error.ejs", { message });
 });
 
-app.listen(8080, () => {
-    console.log("Server is listening to port 8080");
+app.listen(port, () => {
+    console.log(`Server is listening to port ${port}`);
 });
